@@ -8,15 +8,17 @@ try:
 
     window_width = 900
 
-    cell_size = 60
+    cell_size = 50
     grid_size = 1
 
-    lim_speed = 0.0  # Ограничение скорости на 1 цикл
+    lim_speed = 0.0  # Ограничение скорости на 1 поколение (цикл)
 
-    percent_lining_cells = 20
+    distance_from_walls = 6 # В клетках
+
+    percent_lining_cells = 25
 
     living_cell_color = (45, 45, 65)
-    background_color = (200, 200, 200)
+    background_color = (180, 180, 180)
     grid_color = (155, 155, 155)
 
     ########################################################## Не Кастомизируемые
@@ -62,7 +64,13 @@ try:
 
         for i in range(window_width // cell_size):
             for j in range(window_width // cell_size):
-                cells_list.append( [i *cell_size, j *cell_size, True if randint(0,100) <= percent_lining_cells else False] )
+                can_add_live = False
+                if distance_from_walls <= i <= window_width // cell_size - distance_from_walls and\
+                   distance_from_walls <= j <= window_width // cell_size - distance_from_walls and\
+                   randint(0, 100) <= percent_lining_cells:
+                    can_add_live = True
+
+                cells_list.append( [i *cell_size, j *cell_size, can_add_live] )
 
 
 

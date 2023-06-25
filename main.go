@@ -4,7 +4,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"
 	"math/rand"
-	"sync"
 	"time"
 )
 
@@ -14,7 +13,7 @@ const (
 	width  = 900 // Ширина экрана
 	height = 900 // Высота экрана
 
-	cell_size = 9 // Ширина одной клетки
+	cell_size = 3 // Ширина одной клетки
 
 	// Для дальнейшего удобства
 	num_cells_in_line   = width / cell_size
@@ -34,9 +33,6 @@ var (
 
 	// Здесь записываются все состояния клеток (1 - живая, 0 - мёртвая)
 	cell_states [num_cells_in_line * num_cells_in_column]bool
-
-	wg = sync.WaitGroup{}
-	mx = sync.RWMutex{}
 )
 
 //
@@ -74,11 +70,9 @@ func Get_num_neighbours(index_cell int) int {
 					if i <= -1 || i >= num_cells_in_line*num_cells_in_column {
 						continue
 					}
-					mx.Lock()
 					if cell_states[i] {
 						num_neighbours++
 					}
-					mx.Unlock()
 				}
 			}
 			return num_neighbours
@@ -90,11 +84,9 @@ func Get_num_neighbours(index_cell int) int {
 					if i <= -1 || i >= num_cells_in_line*num_cells_in_column {
 						continue
 					}
-					mx.Lock()
 					if cell_states[i] {
 						num_neighbours++
 					}
-					mx.Unlock()
 				}
 			}
 			return num_neighbours
@@ -105,7 +97,6 @@ func Get_num_neighbours(index_cell int) int {
 			// Слева сверху
 			if index_cell == 0 {
 				num_neighbours++
-				mx.Lock()
 				if cell_states[index_cell+1] {
 					num_neighbours++
 				}
@@ -115,12 +106,10 @@ func Get_num_neighbours(index_cell int) int {
 				if cell_states[num_cells_in_line+1] {
 					num_neighbours++
 				}
-				mx.Unlock()
 				return num_neighbours
 				// Справа снизу
 			} else {
 				num_neighbours++
-				mx.Lock()
 				if cell_states[index_cell-1] {
 					num_neighbours++
 				}
@@ -130,7 +119,6 @@ func Get_num_neighbours(index_cell int) int {
 				if cell_states[index_cell-num_cells_in_line-1] {
 					num_neighbours++
 				}
-				mx.Unlock()
 				return num_neighbours
 			}
 		}
@@ -147,11 +135,9 @@ func Get_num_neighbours(index_cell int) int {
 				continue
 			}
 
-			mx.Lock()
 			if cell_states[i] {
 				num_neighbours++
 			}
-			mx.Unlock()
 		}
 	}
 
@@ -165,15 +151,11 @@ func Rules_game(index_cell int) {
 
 	the_num_neighbours := Get_num_neighbours(index_cell)
 
-	mx.Lock()
 	if the_num_neighbours == 2 {
 		cell_states[index_cell] = true
 	} else if the_num_neighbours < 2 || the_num_neighbours > 3 {
 		cell_states[index_cell] = false
 	}
-	mx.Unlock()
-
-	defer wg.Done()
 }
 
 func Make_random_cells_alive(chance float64) {
@@ -197,13 +179,11 @@ func (g *Game) Update() error {
 	start_at := time.Now()
 
 	for ind, _ := range cell_states {
-		wg.Add(1)
-		go Rules_game(ind)
+		Rules_game(ind)
 	}
 
 	// Ждём пока millisecond_between_frames не пройдут
 	// (из того сколько надо подождать вычитаем сколько уже прошло)
-	wg.Wait()
 	time.Sleep(millisecond_between_frames*time.Millisecond - time.Now().Sub(start_at))
 
 	return nil
